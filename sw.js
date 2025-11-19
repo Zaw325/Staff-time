@@ -1,4 +1,3 @@
-// Simple Service Worker
 const CACHE_NAME = 'timecard-v1';
 const urlsToCache = [
   '.',
