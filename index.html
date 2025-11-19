@@ -75,7 +75,7 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // --- 2. SAFE ICONS (No external library needed) ---
+    // --- 2. SAFE ICONS ---
     const Icon = ({ d, className, size = 24 }) => (
         <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
             <path d={d} />
@@ -90,10 +90,11 @@
         Stop: (p) => <Icon {...p} d="M9 9h6v6H9z M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0" />,
         MapPin: (p) => <Icon {...p} d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6" />,
         Coffee: (p) => <Icon {...p} d="M18 8h1a4 4 0 0 1 0 8h-1 M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z M6 1v3 M10 1v3 M14 1v3" />,
-        CalendarPlus: (p) => <Icon {...p} d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7 M16 2v4 M8 2v4 M3 10h18 M19 16v6 M16 19h6" />
+        CalendarPlus: (p) => <Icon {...p} d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7 M16 2v4 M8 2v4 M3 10h18 M19 16v6 M16 19h6" />,
+        Trash: (p) => <Icon {...p} d="M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
     };
 
-    // --- 3. LOGIN SCREEN (Cleaner ID) ---
+    // --- 3. LOGIN SCREEN ---
     const LoginScreen = () => {
         const [staffId, setStaffId] = useState('');
         const [password, setPassword] = useState('');
@@ -103,13 +104,11 @@
         const handleLogin = async (e) => {
             e.preventDefault();
             setLoading(true);
-            // Convert ID to Email
             const fakeEmail = `${staffId.trim().toLowerCase()}@mrsparkle.com`;
-
             try {
                 await auth.signInWithEmailAndPassword(fakeEmail, password);
             } catch (err) {
-                setError("Invalid ID or Password. Try again.");
+                setError("Invalid ID or Password.");
                 setLoading(false);
             }
         };
@@ -144,12 +143,24 @@
         );
     };
 
-    // --- 4. ADMIN DASHBOARD ---
+    // --- 4. ADMIN DASHBOARD (NEW: With Job List) ---
     const AdminDashboard = ({ user }) => {
         const [staffId, setStaffId] = useState('');
         const [jobName, setJobName] = useState('');
         const [jobAddress, setJobAddress] = useState('');
+        const [recentAssignments, setRecentAssignments] = useState([]);
         
+        // Fetch Recent Assignments
+        useEffect(() => {
+            const unsub = db.collection('assignments')
+                .orderBy('createdAt', 'desc')
+                .limit(20)
+                .onSnapshot(snap => {
+                    setRecentAssignments(snap.docs.map(d => ({id: d.id, ...d.data()})));
+                });
+            return () => unsub();
+        }, []);
+
         const handleAssign = async () => {
             if(!staffId || !jobName) return alert("Please enter Staff ID and Job Name");
             
@@ -166,7 +177,13 @@
             });
             
             alert(`Job assigned to ${staffId.toUpperCase()}!`);
-            setJobName(''); setJobAddress('');
+            setJobName(''); setJobAddress(''); // Clear form, but keep Staff ID for next entry
+        };
+
+        const handleDelete = async (id) => {
+            if(confirm("Delete this assignment?")) {
+                await db.collection('assignments').doc(id).delete();
+            }
         };
 
         return (
@@ -180,7 +197,8 @@
                     </div>
                 </div>
 
-                <div className="p-4">
+                <div className="p-4 space-y-6">
+                    {/* Assignment Form */}
                     <div className="bg-white p-6 rounded-xl card-shadow">
                         <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
                             <Icons.CalendarPlus size={20} /> Assign New Job
@@ -189,7 +207,7 @@
                         <div className="space-y-3">
                             <div>
                                 <label className="text-xs font-bold text-gray-500">Assign To (Staff ID)</label>
-                                <input type="text" placeholder="e.g. S001" className="w-full p-2 border rounded" value={staffId} onChange={e=>setStaffId(e.target.value)} />
+                                <input type="text" placeholder="e.g. S001" className="w-full p-2 border rounded font-bold text-gray-800" value={staffId} onChange={e=>setStaffId(e.target.value)} />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-gray-500">House / Job Name</label>
@@ -204,12 +222,38 @@
                             </button>
                         </div>
                     </div>
+
+                    {/* Recent Assignments List */}
+                    <div>
+                        <h3 className="font-bold text-gray-500 text-xs uppercase tracking-wider mb-3 ml-1">Recent Assignments</h3>
+                        <div className="space-y-3">
+                            {recentAssignments.map(job => (
+                                <div key={job.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex justify-between items-center">
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-brandLight text-brandDark text-xs font-bold px-2 py-1 rounded">{job.staffId}</span>
+                                            <span className="font-bold text-gray-800">{job.jobName}</span>
+                                        </div>
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            {job.createdAt && job.createdAt.toDate ? job.createdAt.toDate().toLocaleTimeString() : 'Just now'} • {job.status}
+                                        </p>
+                                    </div>
+                                    <button onClick={() => handleDelete(job.id)} className="text-gray-400 hover:text-red-500">
+                                        <Icons.Trash size={18} />
+                                    </button>
+                                </div>
+                            ))}
+                            {recentAssignments.length === 0 && (
+                                <p className="text-center text-gray-400 text-sm py-4">No jobs assigned yet.</p>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         );
     };
 
-    // --- 5. STAFF DASHBOARD ---
+    // --- 5. STAFF DASHBOARD (Same as before) ---
     const StaffDashboard = ({ user }) => {
         const [myJobs, setMyJobs] = useState([]);
         const [activeJob, setActiveJob] = useState(null);
@@ -230,14 +274,12 @@
                     .where('status', '==', 'active')
                     .limit(1)
                     .get();
-                
                 if (!activeSnap.empty) {
                     const logData = activeSnap.docs[0].data();
                     setActiveJob({ id: activeSnap.docs[0].id, ...logData });
                 }
             };
             checkActive();
-
             return () => unsubJobs();
         }, [user]);
 
@@ -282,11 +324,7 @@
 
             await db.collection('assignments').doc(job.id).update({ status: 'active' });
 
-            setActiveJob({ 
-                id: logRef.id, 
-                jobName: job.jobName, 
-                startTime: new Date() 
-            });
+            setActiveJob({ id: logRef.id, jobName: job.jobName, startTime: new Date() });
         };
 
         const handleClockOut = async () => {
@@ -353,12 +391,6 @@
 
                     <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider mb-3 ml-1">Your Schedule</h3>
                     <div className="space-y-3 pb-8">
-                        {myJobs.length === 0 && (
-                            <div className="text-center py-8 text-gray-400 bg-white rounded-xl border border-dashed border-gray-300">
-                                No jobs assigned yet.
-                            </div>
-                        )}
-
                         {myJobs.map(job => (
                             <div key={job.id} className={`bg-white p-5 rounded-xl card-shadow flex justify-between items-center ${activeJob ? 'opacity-50 grayscale pointer-events-none' : ''}`}>
                                 <div>
@@ -374,6 +406,11 @@
                                 </button>
                             </div>
                         ))}
+                        {myJobs.length === 0 && (
+                            <div className="text-center py-8 text-gray-400 bg-white rounded-xl border border-dashed border-gray-300">
+                                No jobs assigned yet.
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
