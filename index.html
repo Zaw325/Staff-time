@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mrs. Sparkle TimeCard</title>
+<title>Mrs. Sparkle V6</title>
 
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -93,7 +93,8 @@
         Phone: (p) => <Icon {...p} d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />,
         FileText: (p) => <Icon {...p} d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8" />,
         CalendarPlus: (p) => <Icon {...p} d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7 M16 2v4 M8 2v4 M3 10h18 M19 16v6 M16 19h6" />,
-        Trash: (p) => <Icon {...p} d="M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+        Trash: (p) => <Icon {...p} d="M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />,
+        Coffee: (p) => <Icon {...p} d="M18 8h1a4 4 0 0 1 0 8h-1 M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z M6 1v3 M10 1v3 M14 1v3" />
     };
 
     // --- 3. LOGIN SCREEN ---
@@ -123,7 +124,7 @@
                             <Icons.Shield size={40} className="text-brand" />
                         </div>
                     </div>
-                    <h2 className="text-2xl font-bold text-center text-gray-800 mb-1">Mrs. Sparkle</h2>
+                    <h2 className="text-2xl font-bold text-center text-gray-800 mb-1">Mrs. Sparkle V6</h2>
                     <p className="text-center text-gray-500 mb-6 text-sm">Staff Access Portal</p>
                     
                     <form onSubmit={handleLogin} className="space-y-4">
@@ -194,7 +195,7 @@
             <div className="max-w-md mx-auto min-h-screen bg-gray-50 pb-20">
                 <div className="bg-gray-800 text-white p-6 rounded-b-3xl shadow-lg mb-6">
                     <div className="flex justify-between items-center">
-                        <h1 className="text-xl font-bold">Admin Panel</h1>
+                        <h1 className="text-xl font-bold">Admin V6</h1>
                         <button onClick={() => auth.signOut()} className="text-gray-300 text-sm flex items-center gap-1">
                             <Icons.LogOut size={16} /> Logout
                         </button>
@@ -261,7 +262,7 @@
         );
     };
 
-    // --- 5. STAFF DASHBOARD (COMPACT MODE V6) ---
+    // --- 5. STAFF DASHBOARD (V6 - COMPACT) ---
     const StaffDashboard = ({ user }) => {
         const [myJobs, setMyJobs] = useState([]);
         const [activeJob, setActiveJob] = useState(null);
@@ -354,18 +355,11 @@
         const handleClockOut = async () => {
             if (!confirm(`Finish job: "${activeJob.jobName}"?`)) return;
             
-            // Calculate precise duration for summary
             const finalDuration = formatDuration(elapsedTime);
-            const startTimeStr = activeJob.startTime && activeJob.startTime.toDate 
-                ? activeJob.startTime.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
-                : new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            const endTimeStr = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-
             await stopCurrentJob(activeJob.id, activeJob.jobId);
             setActiveJob(null);
             
-            // Show Summary
-            alert(`✅ JOB COMPLETED!\n\n🏠 ${activeJob.jobName}\n🕒 Start: ${startTimeStr}\n🏁 End: ${endTimeStr}\n⏳ Duration: ${finalDuration}`);
+            alert(`✅ JOB COMPLETED!\n\n⏳ Duration: ${finalDuration}`);
         };
 
         return (
@@ -391,12 +385,11 @@
                             return (
                                 <div key={job.id} className={`bg-white p-5 rounded-xl card-shadow flex flex-col gap-3 transition-all ${isActive ? 'border-2 border-green-500 ring-4 ring-green-100' : ''}`}>
                                     
-                                    {/* Job Header + Timer Button */}
                                     <div className="flex justify-between items-start">
                                         <div className="flex-1">
                                             <h4 className="font-bold text-gray-800 text-lg">{job.jobName}</h4>
                                             
-                                            {/* COMPACT TIMER DISPLAY */}
+                                            {/* COMPACT TIMER */}
                                             {isActive ? (
                                                 <div className="flex items-center gap-2 mt-2">
                                                     <span className="status-indicator"></span>
@@ -460,7 +453,6 @@
                             <div className="text-center py-12 text-gray-400 bg-white rounded-xl border border-dashed border-gray-300 flex flex-col items-center">
                                 <Icons.Coffee size={40} className="text-gray-300 mb-2" />
                                 <p>No jobs assigned yet.</p>
-                                <p className="text-xs mt-1">Enjoy your break!</p>
                             </div>
                         )}
                     </div>
