@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mrs. Sparkle V6</title>
+<title>Mrs. Sparkle V7</title>
 
 <!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -30,6 +30,7 @@
                     brandDark: '#5b21b6',
                     brandLight: '#ddd6fe',
                     success: '#10b981', // Emerald
+                    warning: '#f59e0b', // Amber
                 }
             }
         }
@@ -39,7 +40,7 @@
 <style>
     body { font-family: sans-serif; background-color: #f3f4f6; }
     .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-    /* Pulsing Dot for Active Job */
+    /* Status Indicators */
     .pulse-dot {
         width: 8px; height: 8px; background-color: #10b981;
         border-radius: 50%; display: inline-block;
@@ -51,6 +52,7 @@
         70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
         100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
+    .disabled-card { opacity: 0.6; filter: grayscale(100%); pointer-events: none; }
 </style>
 </head>
 <body>
@@ -94,7 +96,10 @@
         FileText: (p) => <Icon {...p} d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8" />,
         CalendarPlus: (p) => <Icon {...p} d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7 M16 2v4 M8 2v4 M3 10h18 M19 16v6 M16 19h6" />,
         Trash: (p) => <Icon {...p} d="M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />,
-        Coffee: (p) => <Icon {...p} d="M18 8h1a4 4 0 0 1 0 8h-1 M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z M6 1v3 M10 1v3 M14 1v3" />
+        Coffee: (p) => <Icon {...p} d="M18 8h1a4 4 0 0 1 0 8h-1 M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z M6 1v3 M10 1v3 M14 1v3" />,
+        CheckCircle: (p) => <Icon {...p} d="M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4L12 14.01l-3-3" />,
+        Sun: (p) => <Icon {...p} d="M12 2v2 M12 20v2 M4.93 4.93l1.41 1.41 M17.66 17.66l1.41 1.41 M2 12h2 M20 12h2 M6.34 17.66l-1.41 1.41 M19.07 4.93l-1.41 1.41 M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z" />,
+        Moon: (p) => <Icon {...p} d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
     };
 
     // --- 3. LOGIN SCREEN ---
@@ -124,7 +129,7 @@
                             <Icons.Shield size={40} className="text-brand" />
                         </div>
                     </div>
-                    <h2 className="text-2xl font-bold text-center text-gray-800 mb-1">Mrs. Sparkle V6</h2>
+                    <h2 className="text-2xl font-bold text-center text-gray-800 mb-1">Mrs. Sparkle</h2>
                     <p className="text-center text-gray-500 mb-6 text-sm">Staff Access Portal</p>
                     
                     <form onSubmit={handleLogin} className="space-y-4">
@@ -146,7 +151,7 @@
         );
     };
 
-    // --- 4. ADMIN DASHBOARD ---
+    // --- 4. ADMIN DASHBOARD (With Time Pickers) ---
     const AdminDashboard = ({ user }) => {
         const [staffId, setStaffId] = useState('');
         const [jobName, setJobName] = useState('');
@@ -154,6 +159,7 @@
         const [jobDuration, setJobDuration] = useState('');
         const [customerPhone, setCustomerPhone] = useState('');
         const [customerRequest, setCustomerRequest] = useState('');
+        const [startTime, setStartTime] = useState('');
         const [recentAssignments, setRecentAssignments] = useState([]);
         
         useEffect(() => {
@@ -167,8 +173,10 @@
         }, []);
 
         const handleAssign = async () => {
-            if(!staffId || !jobName) return alert("Please enter Staff ID and Job Name");
+            if(!staffId || !jobName || !startTime) return alert("Please enter Staff ID, Job Name, and Start Time");
+            
             const targetStaffEmail = `${staffId.trim().toLowerCase()}@mrsparkle.com`;
+            
             await db.collection('assignments').add({
                 staffEmail: targetStaffEmail,
                 staffId: staffId.toUpperCase(),
@@ -177,12 +185,14 @@
                 jobDuration: jobDuration || 'Unspecified',
                 customerPhone: customerPhone || '',
                 customerRequest: customerRequest || '',
+                jobStartTime: startTime,
                 assignedBy: user.email,
                 createdAt: new Date(),
                 status: 'pending'
             });
+            
             alert(`Job assigned to ${staffId.toUpperCase()}!`);
-            setJobName(''); setJobAddress(''); setJobDuration(''); setCustomerPhone(''); setCustomerRequest('');
+            setJobName(''); setJobAddress(''); setJobDuration(''); setCustomerPhone(''); setCustomerRequest(''); setStartTime('');
         };
 
         const handleDelete = async (id) => {
@@ -195,7 +205,7 @@
             <div className="max-w-md mx-auto min-h-screen bg-gray-50 pb-20">
                 <div className="bg-gray-800 text-white p-6 rounded-b-3xl shadow-lg mb-6">
                     <div className="flex justify-between items-center">
-                        <h1 className="text-xl font-bold">Admin V6</h1>
+                        <h1 className="text-xl font-bold">Admin V7</h1>
                         <button onClick={() => auth.signOut()} className="text-gray-300 text-sm flex items-center gap-1">
                             <Icons.LogOut size={16} /> Logout
                         </button>
@@ -207,6 +217,7 @@
                         <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
                             <Icons.CalendarPlus size={20} /> Assign New Job
                         </h3>
+                        
                         <div className="space-y-3">
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
@@ -214,14 +225,22 @@
                                     <input type="text" placeholder="S001" className="w-full p-2 border rounded font-bold text-gray-800" value={staffId} onChange={e=>setStaffId(e.target.value)} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold text-gray-500">Duration (Hrs)</label>
-                                    <input type="number" placeholder="e.g. 4" className="w-full p-2 border rounded" value={jobDuration} onChange={e=>setJobDuration(e.target.value)} />
+                                    <label className="text-xs font-bold text-gray-500">Start Time</label>
+                                    <input type="time" className="w-full p-2 border rounded" value={startTime} onChange={e=>setStartTime(e.target.value)} />
                                 </div>
                             </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-500">Client Name / Job</label>
-                                <input type="text" placeholder="e.g. Mrs. Smith Condo" className="w-full p-2 border rounded" value={jobName} onChange={e=>setJobName(e.target.value)} />
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500">Client Name</label>
+                                    <input type="text" placeholder="e.g. Mrs. Smith" className="w-full p-2 border rounded" value={jobName} onChange={e=>setJobName(e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-gray-500">Duration (Hrs)</label>
+                                    <input type="number" placeholder="4" className="w-full p-2 border rounded" value={jobDuration} onChange={e=>setJobDuration(e.target.value)} />
+                                </div>
                             </div>
+
                             <div>
                                 <label className="text-xs font-bold text-gray-500">Address</label>
                                 <input type="text" placeholder="Full Address..." className="w-full p-2 border rounded" value={jobAddress} onChange={e=>setJobAddress(e.target.value)} />
@@ -248,7 +267,9 @@
                                             <span className="bg-brandLight text-brandDark text-xs font-bold px-2 py-1 rounded">{job.staffId}</span>
                                             <span className="font-bold text-gray-800 text-sm">{job.jobName}</span>
                                         </div>
-                                        <p className="text-xs text-gray-500 mt-1 truncate w-48">{job.jobAddress}</p>
+                                        <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                                            <Icons.Clock size={12}/> {job.jobStartTime || 'Anytime'}
+                                        </p>
                                     </div>
                                     <button onClick={() => handleDelete(job.id)} className="text-gray-400 hover:text-red-500">
                                         <Icons.Trash size={18} />
@@ -262,11 +283,12 @@
         );
     };
 
-    // --- 5. STAFF DASHBOARD (V6 - COMPACT) ---
+    // --- 5. STAFF DASHBOARD (V7 - Grouped & Locked) ---
     const StaffDashboard = ({ user }) => {
-        const [myJobs, setMyJobs] = useState([]);
         const [activeJob, setActiveJob] = useState(null);
         const [elapsedTime, setElapsedTime] = useState(0);
+        const [morningJobs, setMorningJobs] = useState([]);
+        const [afternoonJobs, setAfternoonJobs] = useState([]);
 
         const getSafeTime = (t) => {
             if (!t) return 0;
@@ -280,10 +302,18 @@
                 .where('staffEmail', '==', user.email)
                 .onSnapshot(snap => {
                     const jobs = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                    const pendingJobs = jobs
-                        .filter(j => ['pending', 'active'].includes(j.status))
-                        .sort((a, b) => getSafeTime(b.createdAt) - getSafeTime(a.createdAt));
-                    setMyJobs(pendingJobs);
+                    jobs.sort((a, b) => (a.jobStartTime || '00:00').localeCompare(b.jobStartTime || '00:00'));
+
+                    const morning = [];
+                    const afternoon = [];
+                    jobs.forEach(job => {
+                        const time = job.jobStartTime || '00:00';
+                        const hour = parseInt(time.split(':')[0]);
+                        if (hour < 12) morning.push(job);
+                        else afternoon.push(job);
+                    });
+                    setMorningJobs(morning);
+                    setAfternoonJobs(afternoon);
                 });
 
             const checkActive = async () => {
@@ -321,6 +351,15 @@
             return `${h}h ${m}m`;
         };
 
+        const convertTime12H = (time24) => {
+            if(!time24) return '';
+            const [h, m] = time24.split(':');
+            const hour = parseInt(h);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            return `${hour12}:${m} ${ampm}`;
+        };
+
         const stopCurrentJob = async (logId, jobId) => {
             await db.collection('time_logs').doc(logId).update({
                 endTime: new Date(),
@@ -333,8 +372,10 @@
         };
 
         const handleClockIn = async (newJob) => {
+            if (newJob.status === 'completed') return;
+
             if (activeJob) {
-                const confirmSwitch = confirm(`You are still working at "${activeJob.jobName}".\n\nDo you want to finish that job and start "${newJob.jobName}"?`);
+                const confirmSwitch = confirm(`Switch to "${newJob.jobName}"?`);
                 if (!confirmSwitch) return;
                 await stopCurrentJob(activeJob.id, activeJob.jobId);
             }
@@ -354,12 +395,77 @@
 
         const handleClockOut = async () => {
             if (!confirm(`Finish job: "${activeJob.jobName}"?`)) return;
-            
             const finalDuration = formatDuration(elapsedTime);
             await stopCurrentJob(activeJob.id, activeJob.jobId);
             setActiveJob(null);
-            
             alert(`✅ JOB COMPLETED!\n\n⏳ Duration: ${finalDuration}`);
+        };
+
+        const JobCard = ({ job }) => {
+            const isActive = activeJob && activeJob.jobId === job.id;
+            const isCompleted = job.status === 'completed';
+
+            return (
+                <div className={`bg-white p-5 rounded-xl card-shadow flex flex-col gap-3 transition-all ${isActive ? 'border-2 border-green-500 ring-4 ring-green-100' : ''} ${isCompleted ? 'disabled-card bg-gray-50' : ''}`}>
+                    
+                    <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-bold text-brand uppercase">{convertTime12H(job.jobStartTime)}</span>
+                                {isCompleted && <span className="text-xs font-bold text-gray-400 border border-gray-300 px-1 rounded">DONE</span>}
+                            </div>
+                            <h4 className="font-bold text-gray-800 text-lg">{job.jobName}</h4>
+                            
+                            {isActive ? (
+                                <div className="flex items-center gap-2 mt-2">
+                                    <span className="status-indicator"></span>
+                                    <span className="text-green-600 font-bold text-sm">ON DUTY</span>
+                                    <span className="bg-green-100 text-green-800 text-xs font-mono px-2 py-1 rounded ml-1">{formatDuration(elapsedTime)}</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className="bg-brandLight text-brandDark text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                                        <Icons.Clock size={12} /> {job.jobDuration || '?'} Hrs
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {isActive ? (
+                            <button onClick={handleClockOut} className="bg-red-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-600 transition flex items-center gap-1 font-bold text-sm animate-pulse pointer-events-auto">
+                                <Icons.Stop size={16} /> STOP
+                            </button>
+                        ) : (
+                            <button onClick={() => handleClockIn(job)} disabled={isCompleted} className={`p-3 rounded-full shadow-lg transition active:scale-95 ${isCompleted ? 'bg-gray-300 text-gray-500' : 'bg-brand text-white hover:bg-brandDark'}`}>
+                                <Icons.Play size={24} fill="currentColor" />
+                            </button>
+                        )}
+                    </div>
+
+                    {job.jobAddress && (
+                        <div className="flex items-start gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
+                            <Icons.MapPin size={16} className="mt-0.5 flex-shrink-0 text-gray-400" />
+                            <div className="flex-1">
+                                <span className="block">{job.jobAddress}</span>
+                                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.jobAddress)}`} target="_blank" className="text-blue-600 font-bold text-xs mt-1 inline-block hover:underline pointer-events-auto">Open in Maps</a>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex gap-2">
+                        {job.customerPhone && (
+                            <a href={`tel:${job.customerPhone}`} className="flex-1 flex items-center justify-center gap-2 text-sm font-bold text-green-600 bg-green-50 py-2 rounded-lg hover:bg-green-100 transition pointer-events-auto">
+                                <Icons.Phone size={16} /> Call
+                            </a>
+                        )}
+                        {job.customerRequest && (
+                            <div className="flex-1 bg-yellow-50 text-yellow-700 text-xs p-2 rounded-lg border border-yellow-100 italic">
+                                "{job.customerRequest}"
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
         };
 
         return (
@@ -376,86 +482,37 @@
                     </div>
                 </div>
 
-                <div className="px-4 -mt-4">
-                    <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider mb-3 ml-1">Your Schedule</h3>
-                    
-                    <div className="space-y-4 pb-8">
-                        {myJobs.map(job => {
-                            const isActive = activeJob && activeJob.jobId === job.id;
-                            return (
-                                <div key={job.id} className={`bg-white p-5 rounded-xl card-shadow flex flex-col gap-3 transition-all ${isActive ? 'border-2 border-green-500 ring-4 ring-green-100' : ''}`}>
-                                    
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex-1">
-                                            <h4 className="font-bold text-gray-800 text-lg">{job.jobName}</h4>
-                                            
-                                            {/* COMPACT TIMER */}
-                                            {isActive ? (
-                                                <div className="flex items-center gap-2 mt-2">
-                                                    <span className="status-indicator"></span>
-                                                    <span className="text-green-600 font-bold text-sm">ON DUTY</span>
-                                                    <span className="bg-green-100 text-green-800 text-xs font-mono px-2 py-1 rounded ml-1">
-                                                        {formatDuration(elapsedTime)}
-                                                    </span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className="bg-brandLight text-brandDark text-xs font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                                                        <Icons.Clock size={12} /> {job.jobDuration || '?'} Hrs
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* ACTION BUTTON */}
-                                        {isActive ? (
-                                            <button onClick={handleClockOut} className="bg-red-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-red-600 transition flex items-center gap-1 font-bold text-sm animate-pulse">
-                                                <Icons.Stop size={16} /> STOP
-                                            </button>
-                                        ) : (
-                                            <button onClick={() => handleClockIn(job)} className="bg-brand text-white p-3 rounded-full shadow-lg hover:bg-brandDark transition active:scale-95">
-                                                <Icons.Play size={24} fill="currentColor" />
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    {/* Address & Map */}
-                                    {job.jobAddress && (
-                                        <div className="flex items-start gap-2 text-sm text-gray-600 bg-gray-50 p-2 rounded-lg">
-                                            <Icons.MapPin size={16} className="mt-0.5 flex-shrink-0 text-gray-400" />
-                                            <div className="flex-1">
-                                                <span className="block">{job.jobAddress}</span>
-                                                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.jobAddress)}`} target="_blank" className="text-blue-600 font-bold text-xs mt-1 inline-block hover:underline">
-                                                    Open in Maps
-                                                </a>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Phone & Request */}
-                                    <div className="flex gap-2">
-                                        {job.customerPhone && (
-                                            <a href={`tel:${job.customerPhone}`} className="flex-1 flex items-center justify-center gap-2 text-sm font-bold text-green-600 bg-green-50 py-2 rounded-lg hover:bg-green-100 transition">
-                                                <Icons.Phone size={16} /> Call
-                                            </a>
-                                        )}
-                                        {job.customerRequest && (
-                                            <div className="flex-1 bg-yellow-50 text-yellow-700 text-xs p-2 rounded-lg border border-yellow-100 italic">
-                                                "{job.customerRequest}"
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-
-                        {myJobs.length === 0 && (
-                            <div className="text-center py-12 text-gray-400 bg-white rounded-xl border border-dashed border-gray-300 flex flex-col items-center">
-                                <Icons.Coffee size={40} className="text-gray-300 mb-2" />
-                                <p>No jobs assigned yet.</p>
+                <div className="px-4 -mt-4 space-y-6 pb-12">
+                    {/* Morning Section */}
+                    {morningJobs.length > 0 && (
+                        <div>
+                            <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider mb-3 ml-1 flex items-center gap-2">
+                                <Icons.Sun size={16} className="text-warning" /> Morning Schedule
+                            </h3>
+                            <div className="space-y-4">
+                                {morningJobs.map(job => <JobCard key={job.id} job={job} />)}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
+
+                    {/* Afternoon Section */}
+                    {afternoonJobs.length > 0 && (
+                        <div>
+                            <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider mb-3 ml-1 flex items-center gap-2">
+                                <Icons.Moon size={16} className="text-brand" /> Afternoon Schedule
+                            </h3>
+                            <div className="space-y-4">
+                                {afternoonJobs.map(job => <JobCard key={job.id} job={job} />)}
+                            </div>
+                        </div>
+                    )}
+
+                    {morningJobs.length === 0 && afternoonJobs.length === 0 && (
+                        <div className="text-center py-12 text-gray-400 bg-white rounded-xl border border-dashed border-gray-300 flex flex-col items-center">
+                            <Icons.Coffee size={40} className="text-gray-300 mb-2" />
+                            <p>No jobs assigned yet.</p>
+                        </div>
+                    )}
                 </div>
             </div>
         );
