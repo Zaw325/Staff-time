@@ -3,23 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mrs. Sparkle V8</title>
+<title>Mrs. Sparkle V9 - Calendar Edition</title>
 
-<!-- Tailwind CSS -->
 <script src="https://cdn.tailwindcss.com"></script>
-<!-- React & Babel -->
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 
-<!-- PWA Manifest Link -->
 <meta name="theme-color" content="#7c3aed">
-<link rel="manifest" href="manifest.json">
 
 <script>
     tailwind.config = {
@@ -29,8 +24,7 @@
                     brand: '#7c3aed', // Violet
                     brandDark: '#5b21b6',
                     brandLight: '#ddd6fe',
-                    success: '#10b981', // Emerald
-                    warning: '#f59e0b', // Amber
+                    success: '#10b981',
                     surface: '#f8fafc',
                 }
             }
@@ -41,25 +35,20 @@
 <style>
     body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
     .card-shadow { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); }
-    .status-indicator {
-        width: 8px; height: 8px; background-color: #10b981;
-        border-radius: 50%; display: inline-block;
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-        animation: pulse-green 2s infinite;
-    }
-    @keyframes pulse-green {
-        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-    }
-    .disabled-card { opacity: 0.5; filter: grayscale(100%); pointer-events: none; }
-    /* Modern Input Style */
     .modern-input {
         width: 100%; padding: 0.75rem; border-radius: 0.5rem;
         border: 1px solid #e2e8f0; background-color: #fff;
         transition: all 0.2s; font-size: 0.95rem;
     }
     .modern-input:focus { outline: none; border-color: #7c3aed; ring: 2px solid #ddd6fe; }
+    
+    /* Calendar Styles */
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+    .calendar-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; cursor: pointer; font-size: 0.9rem; position: relative; }
+    .calendar-day:hover { background-color: #f3f4f6; }
+    .calendar-day.active { background-color: #7c3aed; color: white; font-weight: bold; }
+    .calendar-day.has-jobs::after { content: ''; width: 6px; height: 6px; background-color: #10b981; border-radius: 50%; position: absolute; bottom: 4px; }
+    .calendar-day.active.has-jobs::after { background-color: white; }
 </style>
 </head>
 <body>
@@ -100,18 +89,15 @@
         Stop: (p) => <Icon {...p} d="M9 9h6v6H9z M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0" />,
         MapPin: (p) => <Icon {...p} d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6" />,
         Phone: (p) => <Icon {...p} d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />,
-        FileText: (p) => <Icon {...p} d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8" />,
-        CalendarPlus: (p) => <Icon {...p} d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7 M16 2v4 M8 2v4 M3 10h18 M19 16v6 M16 19h6" />,
-        Trash: (p) => <Icon {...p} d="M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />,
-        Coffee: (p) => <Icon {...p} d="M18 8h1a4 4 0 0 1 0 8h-1 M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z M6 1v3 M10 1v3 M14 1v3" />,
-        Sun: (p) => <Icon {...p} d="M12 2v2 M12 20v2 M4.93 4.93l1.41 1.41 M17.66 17.66l1.41 1.41 M2 12h2 M20 12h2 M6.34 17.66l-1.41 1.41 M19.07 4.93l-1.41 1.41 M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z" />,
-        Moon: (p) => <Icon {...p} d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />,
-        Hourglass: (p) => <Icon {...p} d="M4 17l6-6V7H4v10zm0 0v4h16v-4M20 7h-6v4l6 6V7zM10 2h4M10 22h4" /> 
+        Calendar: (p) => <Icon {...p} d="M19 21H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2z M16 2v4 M8 2v4 M3 10h18" />,
+        ChevronLeft: (p) => <Icon {...p} d="M15 18l-6-6 6-6" />,
+        ChevronRight: (p) => <Icon {...p} d="M9 18l6-6-6-6" />,
+        Trash: (p) => <Icon {...p} d="M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
     };
 
-    // --- 3. LOGIN SCREEN ---
+    // --- 3. LOGIN SCREEN (UPDATED: Name Based) ---
     const LoginScreen = () => {
-        const [staffId, setStaffId] = useState('');
+        const [name, setName] = useState('');
         const [password, setPassword] = useState('');
         const [error, setError] = useState('');
         const [loading, setLoading] = useState(false);
@@ -119,11 +105,17 @@
         const handleLogin = async (e) => {
             e.preventDefault();
             setLoading(true);
-            const fakeEmail = `${staffId.trim().toLowerCase()}@mrsparkle.com`;
+            
+            // Logic: Removes spaces from name and appends domain
+            // Example: "Mrs Sparkle" -> "mrssparkle@mrsparkle.com"
+            const cleanName = name.trim().replace(/\s+/g, '').toLowerCase();
+            const fakeEmail = `${cleanName}@mrsparkle.com`;
+            
             try {
                 await auth.signInWithEmailAndPassword(fakeEmail, password);
             } catch (err) {
-                setError("Invalid ID or Password.");
+                console.error(err);
+                setError("User not found. Check spelling or password.");
                 setLoading(false);
             }
         };
@@ -141,8 +133,8 @@
                     
                     <form onSubmit={handleLogin} className="space-y-5">
                         <div>
-                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Staff ID</label>
-                            <input type="text" placeholder="e.g. S001" className="modern-input font-bold text-gray-700" value={staffId} onChange={e=>setStaffId(e.target.value)} required />
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Staff Name / Username</label>
+                            <input type="text" placeholder="e.g. Thidar" className="modern-input font-bold text-gray-700" value={name} onChange={e=>setName(e.target.value)} required />
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-gray-500 uppercase mb-1 ml-1">Password</label>
@@ -158,133 +150,188 @@
         );
     };
 
-    // --- 4. ADMIN DASHBOARD (Start & End Time) ---
+    // --- 4. ADMIN CALENDAR & DASHBOARD ---
     const AdminDashboard = ({ user }) => {
+        // Calendar State
+        const [currentDate, setCurrentDate] = useState(new Date());
+        const [selectedDate, setSelectedDate] = useState(new Date());
+        const [assignments, setAssignments] = useState([]);
+        
+        // Form State
         const [staffId, setStaffId] = useState('');
         const [jobName, setJobName] = useState('');
         const [jobAddress, setJobAddress] = useState('');
         const [jobDuration, setJobDuration] = useState('');
         const [customerPhone, setCustomerPhone] = useState('');
         const [customerRequest, setCustomerRequest] = useState('');
-        
-        // TIME PICKERS
         const [startTime, setStartTime] = useState('');
         const [endTime, setEndTime] = useState('');
 
-        const [recentAssignments, setRecentAssignments] = useState([]);
-        
         useEffect(() => {
             const unsub = db.collection('assignments')
-                .orderBy('createdAt', 'desc')
-                .limit(20)
                 .onSnapshot(snap => {
-                    setRecentAssignments(snap.docs.map(d => ({id: d.id, ...d.data()})));
+                    setAssignments(snap.docs.map(d => ({id: d.id, ...d.data()})));
                 });
             return () => unsub();
         }, []);
 
+        // Calendar Helpers
+        const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+        const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+
+        const formatDate = (date) => {
+            return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+        };
+
+        const changeMonth = (offset) => {
+            const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + offset, 1);
+            setCurrentDate(newDate);
+        };
+
+        const renderCalendar = () => {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const daysInMonth = getDaysInMonth(year, month);
+            const firstDay = getFirstDayOfMonth(year, month);
+            const days = [];
+
+            // Empty slots for previous month
+            for (let i = 0; i < firstDay; i++) {
+                days.push(<div key={`empty-${i}`} className="p-2"></div>);
+            }
+
+            // Days
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const hasJobs = assignments.some(a => a.jobDate === dateStr);
+                const isSelected = formatDate(selectedDate) === dateStr;
+
+                days.push(
+                    <div 
+                        key={d} 
+                        onClick={() => setSelectedDate(new Date(year, month, d))}
+                        className={`calendar-day ${isSelected ? 'active' : ''} ${hasJobs ? 'has-jobs' : ''}`}
+                    >
+                        {d}
+                    </div>
+                );
+            }
+            return days;
+        };
+
         const handleAssign = async () => {
-            if(!staffId || !jobName || !startTime) return alert("Please enter Staff ID, Job Name, and Start Time");
+            if(!staffId || !jobName || !startTime) return alert("Please enter Staff Name, Job Name, and Start Time");
             
-            const targetStaffEmail = `${staffId.trim().toLowerCase()}@mrsparkle.com`;
-            
+            // Using Name logic here too for assignment
+            const targetStaffEmail = `${staffId.trim().replace(/\s+/g, '').toLowerCase()}@mrsparkle.com`;
+            const selectedDateStr = formatDate(selectedDate);
+
             await db.collection('assignments').add({
                 staffEmail: targetStaffEmail,
-                staffId: staffId.toUpperCase(),
+                staffId: staffId,
                 jobName,
                 jobAddress,
                 jobDuration: jobDuration || 'Unspecified',
                 customerPhone: customerPhone || '',
                 customerRequest: customerRequest || '',
+                jobDate: selectedDateStr, // Important for filtering
                 jobStartTime: startTime,
-                jobEndTime: endTime, // Saved End Time
+                jobEndTime: endTime,
                 assignedBy: user.email,
                 createdAt: new Date(),
                 status: 'pending'
             });
             
-            alert(`Job assigned to ${staffId.toUpperCase()}!`);
-            setJobName(''); setJobAddress(''); setJobDuration(''); setCustomerPhone(''); setCustomerRequest(''); setStartTime(''); setEndTime('');
+            alert(`Job assigned for ${selectedDateStr}!`);
+            setJobName(''); setJobAddress(''); setCustomerPhone(''); setStartTime(''); setEndTime('');
         };
 
         const handleDelete = async (id) => {
-            if(confirm("Delete this assignment?")) {
-                await db.collection('assignments').doc(id).delete();
-            }
+            if(confirm("Delete this assignment?")) await db.collection('assignments').doc(id).delete();
         };
+
+        // Filter jobs for the selected date
+        const jobsForSelectedDate = assignments.filter(a => a.jobDate === formatDate(selectedDate));
 
         return (
             <div className="max-w-md mx-auto min-h-screen bg-gray-50 pb-24">
-                <div className="bg-gray-900 text-white p-6 rounded-b-3xl shadow-lg mb-6 sticky top-0 z-10">
+                {/* Header */}
+                <div className="bg-gray-900 text-white p-6 rounded-b-3xl shadow-lg mb-6">
                     <div className="flex justify-between items-center">
-                        <h1 className="text-xl font-bold">Admin Panel</h1>
-                        <button onClick={() => auth.signOut()} className="text-gray-400 text-sm flex items-center gap-1 hover:text-white transition">
+                        <h1 className="text-xl font-bold">Admin Scheduler</h1>
+                        <button onClick={() => auth.signOut()} className="text-gray-400 text-sm flex items-center gap-1 hover:text-white">
                             <Icons.LogOut size={16} /> Logout
                         </button>
                     </div>
                 </div>
 
-                <div className="p-4 space-y-6">
-                    <div className="bg-white p-6 rounded-xl card-shadow">
-                        <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2 text-lg">
-                            <div className="p-2 bg-brandLight rounded-lg text-brand"><Icons.CalendarPlus size={20} /></div>
-                            Assign New Job
+                <div className="px-4 space-y-6">
+                    
+                    {/* CALENDAR COMPONENT */}
+                    <div className="bg-white p-4 rounded-xl card-shadow">
+                        <div className="flex justify-between items-center mb-4">
+                            <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-gray-100 rounded"><Icons.ChevronLeft /></button>
+                            <h2 className="font-bold text-gray-800">
+                                {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                            </h2>
+                            <button onClick={() => changeMonth(1)} className="p-1 hover:bg-gray-100 rounded"><Icons.ChevronRight /></button>
+                        </div>
+                        <div className="grid grid-cols-7 gap-4 mb-2 text-center text-xs font-bold text-gray-400">
+                            <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                        </div>
+                        <div className="calendar-grid">
+                            {renderCalendar()}
+                        </div>
+                    </div>
+
+                    {/* ASSIGNMENT FORM FOR SELECTED DATE */}
+                    <div className="bg-white p-6 rounded-xl card-shadow border-l-4 border-brand">
+                        <h3 className="font-bold text-gray-800 mb-1 flex items-center gap-2">
+                             Job for: <span className="text-brand">{selectedDate.toDateString()}</span>
                         </h3>
+                        <p className="text-xs text-gray-400 mb-4">Fill in details to schedule a cleaner.</p>
                         
                         <div className="space-y-4">
                             <div className="grid grid-cols-3 gap-3">
-                                <div className="col-span-1">
-                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Staff ID</label>
-                                    <input type="text" placeholder="S001" className="modern-input font-bold text-gray-800 text-center" value={staffId} onChange={e=>setStaffId(e.target.value)} />
-                                </div>
                                 <div className="col-span-2">
-                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Duration (Hrs)</label>
-                                    <input type="number" placeholder="e.g. 4" className="modern-input" value={jobDuration} onChange={e=>setJobDuration(e.target.value)} />
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Staff Name</label>
+                                    <input type="text" placeholder="e.g. Thidar" className="modern-input font-bold text-gray-800" value={staffId} onChange={e=>setStaffId(e.target.value)} />
+                                </div>
+                                <div className="col-span-1">
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Hrs</label>
+                                    <input type="number" placeholder="4" className="modern-input" value={jobDuration} onChange={e=>setJobDuration(e.target.value)} />
                                 </div>
                             </div>
 
-                            {/* TIME PICKERS */}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Start Time</label>
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Start</label>
                                     <input type="time" className="modern-input" value={startTime} onChange={e=>setStartTime(e.target.value)} />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">End Time</label>
+                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">End</label>
                                     <input type="time" className="modern-input" value={endTime} onChange={e=>setEndTime(e.target.value)} />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Client / Job Name</label>
-                                <input type="text" placeholder="e.g. Mrs. Smith Condo" className="modern-input" value={jobName} onChange={e=>setJobName(e.target.value)} />
-                            </div>
+                            <input type="text" placeholder="Client / Job Name" className="modern-input" value={jobName} onChange={e=>setJobName(e.target.value)} />
+                            <input type="text" placeholder="Address" className="modern-input" value={jobAddress} onChange={e=>setJobAddress(e.target.value)} />
+                            <input type="tel" placeholder="Phone No." className="modern-input" value={customerPhone} onChange={e=>setCustomerPhone(e.target.value)} />
+                            <textarea placeholder="Notes..." className="modern-input" rows="2" value={customerRequest} onChange={e=>setCustomerRequest(e.target.value)}></textarea>
 
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Address</label>
-                                <input type="text" placeholder="Full Address..." className="modern-input" value={jobAddress} onChange={e=>setJobAddress(e.target.value)} />
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Phone</label>
-                                <input type="tel" placeholder="09..." className="modern-input" value={customerPhone} onChange={e=>setCustomerPhone(e.target.value)} />
-                            </div>
-
-                            <div>
-                                <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Notes</label>
-                                <textarea placeholder="Special instructions..." className="modern-input" rows="2" value={customerRequest} onChange={e=>setCustomerRequest(e.target.value)}></textarea>
-                            </div>
-
-                            <button onClick={handleAssign} className="w-full bg-gray-900 text-white py-3.5 rounded-xl font-bold hover:bg-black transition shadow-lg mt-2">
-                                Assign Job
+                            <button onClick={handleAssign} className="w-full bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-black transition shadow-lg">
+                                Schedule Job
                             </button>
                         </div>
                     </div>
 
+                    {/* LIST FOR SELECTED DATE */}
                     <div>
-                        <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider mb-3 ml-1">Recent Assignments</h3>
+                        <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider mb-3 ml-1">Scheduled on this day</h3>
                         <div className="space-y-3">
-                            {recentAssignments.map(job => (
+                            {jobsForSelectedDate.length === 0 && <p className="text-sm text-gray-400 italic ml-1">No jobs scheduled.</p>}
+                            
+                            {jobsForSelectedDate.map(job => (
                                 <div key={job.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
@@ -292,7 +339,7 @@
                                             <span className="font-bold text-gray-800 text-sm">{job.jobName}</span>
                                         </div>
                                         <p className="text-xs text-gray-500 flex items-center gap-1">
-                                            <Icons.Clock size={12}/> {job.jobStartTime} - {job.jobEndTime || '?'}
+                                            <Icons.Clock size={12}/> {job.jobStartTime} - {job.jobEndTime}
                                         </p>
                                     </div>
                                     <button onClick={() => handleDelete(job.id)} className="text-gray-300 hover:text-red-500 p-2">
@@ -307,13 +354,13 @@
         );
     };
 
-    // --- 5. STAFF DASHBOARD (Professional Schedule UI) ---
+    // --- 5. STAFF DASHBOARD (With Date Display) ---
     const StaffDashboard = ({ user }) => {
         const [activeJob, setActiveJob] = useState(null);
         const [elapsedTime, setElapsedTime] = useState(0);
-        const [morningJobs, setMorningJobs] = useState([]);
-        const [afternoonJobs, setAfternoonJobs] = useState([]);
+        const [myJobs, setMyJobs] = useState([]);
 
+        // Helper to safely parse dates
         const getSafeTime = (t) => {
             if (!t) return 0;
             if (t.toDate) return t.toDate().getTime();
@@ -322,24 +369,24 @@
         };
 
         useEffect(() => {
+            // Get today's date string YYYY-MM-DD
+            const todayStr = new Date().toISOString().split('T')[0];
+
             const unsubJobs = db.collection('assignments')
                 .where('staffEmail', '==', user.email)
                 .onSnapshot(snap => {
                     const jobs = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                    jobs.sort((a, b) => (a.jobStartTime || '00:00').localeCompare(b.jobStartTime || '00:00'));
-
-                    const morning = [];
-                    const afternoon = [];
-                    jobs.forEach(job => {
-                        const time = job.jobStartTime || '00:00';
-                        const hour = parseInt(time.split(':')[0]);
-                        if (hour < 12) morning.push(job);
-                        else afternoon.push(job);
+                    
+                    // Sort by Date then Time
+                    jobs.sort((a, b) => {
+                        if (a.jobDate !== b.jobDate) return a.jobDate.localeCompare(b.jobDate);
+                        return (a.jobStartTime || '00:00').localeCompare(b.jobStartTime || '00:00');
                     });
-                    setMorningJobs(morning);
-                    setAfternoonJobs(afternoon);
+
+                    setMyJobs(jobs);
                 });
 
+            // Active Job Check logic...
             const checkActive = async () => {
                 const activeSnap = await db.collection('time_logs')
                     .where('staffUid', '==', user.uid)
@@ -355,6 +402,7 @@
             return () => unsubJobs();
         }, [user]);
 
+        // Timer Logic
         useEffect(() => {
             let interval;
             if (activeJob) {
@@ -364,7 +412,7 @@
                     setElapsedTime(Math.floor((now - startMs) / 1000));
                 };
                 updateTimer();
-                interval = setInterval(updateTimer, 60000);
+                interval = setInterval(updateTimer, 60000); // Update every minute
             }
             return () => clearInterval(interval);
         }, [activeJob]);
@@ -374,7 +422,7 @@
             const m = Math.floor((seconds % 3600) / 60);
             return `${h}h ${m}m`;
         };
-
+        
         const convertTime12H = (time24) => {
             if(!time24) return '';
             const [h, m] = time24.split(':');
@@ -384,27 +432,28 @@
             return `${hour12}:${m} ${ampm}`;
         };
 
+        // Clock In/Out Handlers
         const stopCurrentJob = async (logId, jobId) => {
             await db.collection('time_logs').doc(logId).update({
                 endTime: new Date(),
                 status: 'completed',
                 durationSeconds: elapsedTime
             });
-            if (jobId) {
-                await db.collection('assignments').doc(jobId).update({ status: 'completed' });
-            }
+            if (jobId) await db.collection('assignments').doc(jobId).update({ status: 'completed' });
         };
 
         const handleClockIn = async (newJob) => {
             if (newJob.status === 'completed') return;
             if (activeJob) {
-                const confirmSwitch = confirm(`Switch to "${newJob.jobName}"?`);
-                if (!confirmSwitch) return;
+                if (!confirm(`Switch to "${newJob.jobName}"?`)) return;
                 await stopCurrentJob(activeJob.id, activeJob.jobId);
             }
+            // Create clean name for record
+            const displayName = user.email.split('@')[0];
+            
             const logRef = await db.collection('time_logs').add({
                 staffUid: user.uid,
-                staffId: user.email.split('@')[0].toUpperCase(),
+                staffId: displayName, 
                 jobId: newJob.id,
                 jobName: newJob.jobName,
                 startTime: new Date(),
@@ -425,24 +474,27 @@
         const JobCard = ({ job }) => {
             const isActive = activeJob && activeJob.jobId === job.id;
             const isCompleted = job.status === 'completed';
+            const isToday = job.jobDate === new Date().toISOString().split('T')[0];
 
             return (
-                <div className={`relative bg-white p-5 rounded-2xl card-shadow flex flex-col gap-3 transition-all ${isActive ? 'border-2 border-green-500 ring-4 ring-green-50 z-10' : ''} ${isCompleted ? 'disabled-card bg-gray-50' : ''}`}>
+                <div className={`relative bg-white p-5 rounded-2xl card-shadow flex flex-col gap-3 mb-4 transition-all ${isActive ? 'border-2 border-green-500 ring-4 ring-green-50 z-10' : ''} ${isCompleted ? 'disabled-card bg-gray-50' : ''}`}>
                     
-                    {/* Time Range Header */}
                     <div className="flex justify-between items-start mb-1">
-                         <div className="flex items-center gap-2 text-sm font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                            <Icons.Clock size={14} />
-                            {convertTime12H(job.jobStartTime)} - {convertTime12H(job.jobEndTime)}
+                        <div className="flex gap-2">
+                             <div className={`text-xs font-bold px-2 py-1 rounded border ${isToday ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-gray-100 text-gray-500'}`}>
+                                {isToday ? 'TODAY' : job.jobDate}
+                            </div>
+                            <div className="flex items-center gap-1 text-sm font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                                <Icons.Clock size={14} />
+                                {convertTime12H(job.jobStartTime)}
+                            </div>
                         </div>
                         {isCompleted && <span className="text-xs font-bold text-white bg-gray-400 px-2 py-1 rounded">DONE</span>}
                     </div>
 
-                    {/* Job Title & Status */}
                     <div className="flex justify-between items-start">
                         <div className="flex-1">
                             <h4 className="font-bold text-gray-800 text-lg leading-tight">{job.jobName}</h4>
-                            
                             {isActive ? (
                                 <div className="flex items-center gap-2 mt-2">
                                     <span className="status-indicator"></span>
@@ -453,96 +505,54 @@
                                 <div className="text-xs text-gray-400 mt-1 font-medium">{job.jobDuration} Hrs Estimated</div>
                             )}
                         </div>
-
                         {isActive ? (
-                            <button onClick={handleClockOut} className="bg-red-500 text-white px-5 py-2.5 rounded-xl shadow-lg shadow-red-200 hover:bg-red-600 transition flex items-center gap-1.5 font-bold text-sm pointer-events-auto">
-                                <Icons.Stop size={18} /> STOP
-                            </button>
+                            <button onClick={handleClockOut} className="bg-red-500 text-white px-4 py-2 rounded-xl shadow-lg hover:bg-red-600 font-bold text-sm"><Icons.Stop size={18} /> STOP</button>
                         ) : (
-                            <button onClick={() => handleClockIn(job)} disabled={isCompleted} className={`p-3.5 rounded-full shadow-lg transition active:scale-95 ${isCompleted ? 'bg-gray-200 text-gray-400' : 'bg-brand text-white hover:bg-brandDark shadow-violet-200'}`}>
-                                <Icons.Play size={24} fill="currentColor" />
+                            <button onClick={() => handleClockIn(job)} disabled={isCompleted} className={`p-3 rounded-full shadow-lg transition ${isCompleted ? 'bg-gray-200 text-gray-400' : 'bg-brand text-white hover:bg-brandDark'}`}>
+                                <Icons.Play size={20} fill="currentColor" />
                             </button>
                         )}
                     </div>
 
-                    {/* Location */}
-                    {job.jobAddress && (
-                        <div className="flex items-start gap-2.5 text-sm text-gray-600 bg-surface p-3 rounded-xl border border-gray-100">
-                            <Icons.MapPin size={18} className="mt-0.5 flex-shrink-0 text-gray-400" />
-                            <div className="flex-1">
-                                <span className="block font-medium text-gray-700">{job.jobAddress}</span>
-                                <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.jobAddress)}`} target="_blank" className="text-brand font-bold text-xs mt-1 inline-flex items-center gap-1 hover:underline pointer-events-auto">
-                                    Open in Maps <Icons.Play size={10} />
-                                </a>
-                            </div>
+                     {job.jobAddress && (
+                        <div className="flex items-start gap-2 text-sm text-gray-600 bg-surface p-3 rounded-xl border border-gray-100">
+                            <Icons.MapPin size={16} className="mt-0.5 flex-shrink-0 text-gray-400" />
+                            <span className="font-medium text-gray-700">{job.jobAddress}</span>
                         </div>
                     )}
-
-                    {/* Actions Row */}
-                    <div className="flex gap-3 pt-1">
-                        {job.customerPhone && (
-                            <a href={`tel:${job.customerPhone}`} className="flex-1 flex items-center justify-center gap-2 text-xs font-bold text-green-700 bg-green-50 py-3 rounded-xl border border-green-100 hover:bg-green-100 transition pointer-events-auto">
-                                <Icons.Phone size={16} /> Call Client
-                            </a>
-                        )}
-                        {job.customerRequest && (
-                            <div className="flex-[2] bg-yellow-50 text-yellow-800 text-xs p-3 rounded-xl border border-yellow-100 italic leading-relaxed">
-                                "{job.customerRequest}"
-                            </div>
-                        )}
-                    </div>
                 </div>
             );
         };
 
+        // Filter jobs to show active/pending first
+        const upcomingJobs = myJobs.filter(j => j.status !== 'completed');
+        const pastJobs = myJobs.filter(j => j.status === 'completed');
+
         return (
             <div className="max-w-md mx-auto min-h-screen bg-gray-50 relative">
-                <div className="bg-brand text-white p-6 pb-12 rounded-b-[2.5rem] shadow-xl">
+                <div className="bg-brand text-white p-6 pb-10 rounded-b-[2rem] shadow-xl">
                     <div className="flex justify-between items-center">
                         <div>
-                            <p className="text-brandLight text-xs uppercase font-bold tracking-wider mb-0.5">Welcome back,</p>
-                            <h1 className="text-2xl font-bold">{user.email.split('@')[0].toUpperCase()}</h1>
+                            <p className="text-brandLight text-xs uppercase font-bold tracking-wider mb-0.5">Hello,</p>
+                            <h1 className="text-2xl font-bold capitalize">{user.email.split('@')[0]}</h1>
                         </div>
-                        <button onClick={() => auth.signOut()} className="bg-white/20 p-2.5 rounded-full hover:bg-white/30 transition backdrop-blur-sm">
+                        <button onClick={() => auth.signOut()} className="bg-white/20 p-2 rounded-full hover:bg-white/30">
                             <Icons.LogOut size={20} />
                         </button>
                     </div>
                 </div>
 
-                <div className="px-4 -mt-6 space-y-8 pb-12">
-                    {/* Morning Section */}
-                    {morningJobs.length > 0 && (
-                        <div>
-                            <div className="flex items-center gap-3 mb-4 ml-1">
-                                <div className="p-1.5 bg-orange-100 text-orange-500 rounded-lg"><Icons.Sun size={18} /></div>
-                                <h3 className="font-bold text-gray-500 uppercase text-xs tracking-widest">Morning Schedule</h3>
-                            </div>
-                            <div className="space-y-5">
-                                {morningJobs.map(job => <JobCard key={job.id} job={job} />)}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Afternoon Section */}
-                    {afternoonJobs.length > 0 && (
-                        <div>
-                             <div className="flex items-center gap-3 mb-4 ml-1">
-                                <div className="p-1.5 bg-indigo-100 text-indigo-500 rounded-lg"><Icons.Moon size={18} /></div>
-                                <h3 className="font-bold text-gray-500 uppercase text-xs tracking-widest">Afternoon Schedule</h3>
-                            </div>
-                            <div className="space-y-5">
-                                {afternoonJobs.map(job => <JobCard key={job.id} job={job} />)}
-                            </div>
-                        </div>
-                    )}
-
-                    {morningJobs.length === 0 && afternoonJobs.length === 0 && (
-                        <div className="text-center py-16 text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200 flex flex-col items-center shadow-sm mt-4">
-                            <div className="bg-gray-50 p-4 rounded-full mb-3">
-                                <Icons.Coffee size={32} className="text-gray-300" />
-                            </div>
-                            <p className="font-medium text-gray-500">No jobs assigned yet.</p>
-                            <p className="text-xs text-gray-400 mt-1">Enjoy your free time!</p>
+                <div className="px-4 -mt-6 space-y-6 pb-12">
+                    <div>
+                        <h3 className="font-bold text-gray-500 uppercase text-xs tracking-widest mb-3 ml-1">Upcoming Schedule</h3>
+                        {upcomingJobs.length === 0 && <p className="text-gray-400 text-center py-4 bg-white rounded-xl border border-dashed">No upcoming jobs.</p>}
+                        {upcomingJobs.map(job => <JobCard key={job.id} job={job} />)}
+                    </div>
+                    
+                    {pastJobs.length > 0 && (
+                        <div className="opacity-60">
+                            <h3 className="font-bold text-gray-500 uppercase text-xs tracking-widest mb-3 ml-1">Completed</h3>
+                            {pastJobs.map(job => <JobCard key={job.id} job={job} />)}
                         </div>
                     )}
                 </div>
@@ -559,24 +569,15 @@
         }, []);
         if(checking) return null; 
         if (!user) return <LoginScreen />;
+        
+        // Admin Check (Ensure your admin email matches exactly)
         if (user.email === 'admin@mrsparkle.com') return <AdminDashboard user={user} />;
+        
         return <StaffDashboard user={user} />;
     };
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<Root />);
 </script>
-
-<!-- PWA Service Worker -->
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW failed', err));
-        });
-    }
-</script>
-
 </body>
 </html>
-
-
