@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mrs. Sparkle V15 - Map Fixed</title>
+<title>Mrs. Sparkle V16 - Fast Track</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -58,8 +58,6 @@
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-around; padding: 10px 0; padding-bottom: max(10px, env(safe-area-inset-bottom)); z-index: 40; }
     .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #94a3b8; font-size: 0.7rem; font-weight: 600; width: 50%; }
     .nav-item.active { color: #7c3aed; }
-    
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 50; }
 </style>
 </head>
 <body>
@@ -82,28 +80,6 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
-
-    // --- UTILS ---
-    const compressImage = (file) => {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 600; 
-                    const scaleSize = MAX_WIDTH / img.width;
-                    canvas.width = MAX_WIDTH;
-                    canvas.height = img.height * scaleSize;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL('image/jpeg', 0.7));
-                }
-            }
-        });
-    };
 
     const getLocalISODate = (date) => {
         const offset = date.getTimezoneOffset();
@@ -131,9 +107,7 @@
         Trash: (p) => <Icon {...p} d="M3 6h18 M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />,
         List: (p) => <Icon {...p} d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
         CheckCircle: (p) => <Icon {...p} d="M22 11.08V12a10 10 0 1 1-5.93-9.14 M22 4L12 14.01l-3-3" />,
-        Camera: (p) => <Icon {...p} d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />,
         Download: (p) => <Icon {...p} d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M7 10l5 5 5-5 M12 15V3" />,
-        Eye: (p) => <Icon {...p} d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" />,
         Star: (p) => <Icon {...p} d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />,
         Lock: (p) => <Icon {...p} d="M19 11H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2zm-7-7a4 4 0 0 0-4 4v3h8V8a4 4 0 0 0-4-4z" />,
         Users: (p) => <Icon {...p} d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M16 3.13a4 4 0 0 1 0 7.75 M23 21v-2a4 4 0 0 0-3-3.87" />,
@@ -337,9 +311,6 @@
         const [activeJob, setActiveJob] = useState(null);
         const [elapsedTime, setElapsedTime] = useState(0);
         const [myJobs, setMyJobs] = useState([]);
-        const [isStopping, setIsStopping] = useState(false);
-        const [uploading, setUploading] = useState(false);
-        const fileInputRef = useRef(null);
         
         const todayStr = getLocalISODate(new Date());
         const [currentDate, setCurrentDate] = useState(new Date());
@@ -361,14 +332,14 @@
 
         useEffect(() => {
             let interval;
-            if (activeJob && !isStopping) {
+            if (activeJob) {
                 interval = setInterval(() => {
                     const startMs = activeJob.startTime ? activeJob.startTime.toDate().getTime() : new Date().getTime();
                     setElapsedTime(Math.floor((new Date().getTime() - startMs) / 1000));
                 }, 60000);
             }
             return () => clearInterval(interval);
-        }, [activeJob, isStopping]);
+        }, [activeJob]);
 
         const formatDuration = (seconds) => { const h = Math.floor(seconds / 3600); const m = Math.floor((seconds % 3600) / 60); return `${h}h ${m}m`; };
         const convertTime12H = (time24) => { if(!time24) return ''; const [h, m] = time24.split(':'); return `${parseInt(h)%12||12}:${m} ${parseInt(h)>=12?'PM':'AM'}`; };
@@ -381,16 +352,20 @@
             setActiveJob({ id: logRef.id, jobName: newJob.jobName, jobId: newJob.id, startTime: new Date() });
         };
 
-        const confirmStopWithPhoto = async (e) => {
-            const file = e.target.files[0]; if (!file) return; setUploading(true);
-            try {
-                const compressedBase64 = await compressImage(file);
-                const finalDuration = Math.floor((new Date().getTime() - activeJob.startTime.toDate().getTime()) / 1000);
-                await db.collection('time_logs').doc(activeJob.id).update({ endTime: new Date(), status: 'completed', durationSeconds: finalDuration, photoBase64: compressedBase64 });
-                await db.collection('assignments').doc(activeJob.jobId).update({ status: 'completed' });
-                setActiveJob(null); setIsStopping(false); alert("✅ Job Completed!");
-            } catch (err) { alert("Error uploading photo."); }
-            setUploading(false);
+        // --- NEW SIMPLE STOP LOGIC (NO PHOTO) ---
+        const handleStopJob = async () => {
+            if (!confirm("Are you sure you want to finish this job?")) return;
+            
+            // Calculate Final Duration
+            const finalDuration = Math.floor((new Date().getTime() - activeJob.startTime.toDate().getTime()) / 1000);
+            
+            await db.collection('time_logs').doc(activeJob.id).update({
+                endTime: new Date(), status: 'completed', durationSeconds: finalDuration
+            });
+            await db.collection('assignments').doc(activeJob.jobId).update({ status: 'completed' });
+            
+            setActiveJob(null);
+            alert("✅ Job Completed!");
         };
 
         const JobCard = ({ job }) => {
@@ -415,7 +390,7 @@
                         </div>
                         {!isLocked && (
                             isActive ? (
-                                <button onClick={()=>setIsStopping(true)} className="bg-red-500 text-white px-4 py-2 rounded-xl shadow hover:bg-red-600 font-bold text-xs flex items-center gap-1"><Icons.Camera size={16} /> DONE</button>
+                                <button onClick={handleStopJob} className="bg-red-500 text-white px-4 py-2 rounded-xl shadow hover:bg-red-600 font-bold text-xs flex items-center gap-1"><Icons.CheckCircle size={16} /> DONE</button>
                             ) : (
                                 isCompleted ? <div className="p-2 bg-green-100 rounded-full text-green-600"><Icons.CheckCircle size={24} /></div> :
                                 <button onClick={() => handleClockIn(job)} className="p-3 rounded-full shadow-lg bg-brand text-white hover:bg-brandDark"><Icons.Play size={20} fill="currentColor" /></button>
@@ -423,7 +398,7 @@
                         )}
                     </div>
                     
-                    {/* ADDRESS SECTION - FIXED FOR V15: CLICKABLE MAP */}
+                    {/* ADDRESS SECTION */}
                     {isLocked ? (
                         <div className="flex items-start gap-2 text-sm p-3 rounded-xl border bg-gray-50 border-gray-200 text-gray-400">
                             <Icons.Lock size={16} className="mt-0.5 flex-shrink-0" />
@@ -487,17 +462,6 @@
                     <button onClick={() => setActiveTab('today')} className={`nav-item ${activeTab==='today'?'active':''}`}><Icons.Star size={24} strokeWidth={activeTab==='today'?2.5:2} /><span>TODAY</span></button>
                     <button onClick={() => setActiveTab('planner')} className={`nav-item ${activeTab==='planner'?'active':''}`}><Icons.Calendar size={24} strokeWidth={activeTab==='planner'?2.5:2} /><span>PLANNER</span></button>
                 </div>
-
-                {isStopping && (
-                    <div className="modal-overlay">
-                        <div className="bg-white p-6 rounded-2xl w-full max-w-xs text-center shadow-2xl">
-                            <div className="bg-brandLight w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"><Icons.Camera size={32} className="text-brand" /></div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-2">Job Complete?</h3>
-                            <p className="text-sm text-gray-500 mb-6">Take a photo proof to finish.</p>
-                            {uploading ? <div className="py-3 text-brand font-bold animate-pulse">Uploading...</div> : (<div className="space-y-3"><button onClick={()=>fileInputRef.current.click()} className="w-full bg-brand text-white py-3 rounded-xl font-bold shadow-lg">Camera</button><input type="file" accept="image/*" capture="environment" ref={fileInputRef} onChange={confirmStopWithPhoto} className="hidden" /><button onClick={()=>setIsStopping(false)} className="w-full py-3 text-gray-400 font-bold text-sm">Cancel</button></div>)}
-                        </div>
-                    </div>
-                )}
             </div>
         );
     };
