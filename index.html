@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Mrs. Sparkle V14 - Ultimate</title>
+<title>Mrs. Sparkle V15 - Map Fixed</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -139,7 +139,8 @@
         Users: (p) => <Icon {...p} d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M16 3.13a4 4 0 0 1 0 7.75 M23 21v-2a4 4 0 0 0-3-3.87" />,
         Home: (p) => <Icon {...p} d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10" />,
         Edit: (p) => <Icon {...p} d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7 M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />,
-        UserPlus: (p) => <Icon {...p} d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M16 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M20 8v6 M23 11h-6" />
+        UserPlus: (p) => <Icon {...p} d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M16 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8 M20 8v6 M23 11h-6" />,
+        ExternalLink: (p) => <Icon {...p} d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6 M15 3h6v6 M10 14L21 3" />
     };
 
     // --- LOGIN SCREEN ---
@@ -181,16 +182,15 @@
 
     // --- ADMIN DASHBOARD ---
     const AdminDashboard = ({ user }) => {
-        const [activeTab, setActiveTab] = useState('dashboard'); // dashboard, scheduler, staff, history
+        const [activeTab, setActiveTab] = useState('dashboard');
         const [currentDate, setCurrentDate] = useState(new Date());
         const [selectedDate, setSelectedDate] = useState(new Date());
         const [showCalendar, setShowCalendar] = useState(false);
         const [assignments, setAssignments] = useState([]);
-        const [staffList, setStaffList] = useState([]); // Staff collection
+        const [staffList, setStaffList] = useState([]); 
         const [historyLogs, setHistoryLogs] = useState([]);
-        const [editingJob, setEditingJob] = useState(null); // For Edit Modal
+        const [editingJob, setEditingJob] = useState(null); 
 
-        // Form Data
         const [formData, setFormData] = useState({
             staffId: '', jobName: '', jobAddress: '', jobDuration: '', 
             customerPhone: '', customerRequest: '', startTime: '', endTime: ''
@@ -205,14 +205,12 @@
             return () => { unsubAssign(); unsubStaff(); unsubHistory(); };
         }, []);
 
-        // Helpers
         const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
         const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
         const changeMonth = (offset) => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + offset, 1));
         const handleDateClick = (d) => { setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), d)); setShowCalendar(false); };
         const formatDuration = (seconds) => { if(!seconds) return '0m'; const h = Math.floor(seconds / 3600); const m = Math.floor((seconds % 3600) / 60); return h>0 ? `${h}h ${m}m` : `${m}m`; };
 
-        // --- CRUD OPERATIONS ---
         const handleAssign = async () => {
             const { staffId, jobName, startTime } = formData;
             if(!staffId || !jobName || !startTime) return alert("Please select Staff, Job Name and Start Time");
@@ -246,22 +244,14 @@
                 jobDuration: job.jobDuration, customerPhone: job.customerPhone, 
                 customerRequest: job.customerRequest, startTime: job.jobStartTime, endTime: job.jobEndTime
             });
-            setSelectedDate(new Date(job.jobDate)); // Jump to that date
-            window.scrollTo(0,0); // Scroll to form
+            setSelectedDate(new Date(job.jobDate)); 
+            window.scrollTo(0,0); 
         };
 
         const handleDelete = async (id) => { if(confirm("Delete this job permanently?")) await db.collection('assignments').doc(id).delete(); };
-
-        const handleAddStaff = async () => {
-            if(!newStaffName) return;
-            await db.collection('staff').add({ name: newStaffName, createdAt: new Date() });
-            setNewStaffName('');
-            alert("Staff added!");
-        };
-
+        const handleAddStaff = async () => { if(!newStaffName) return; await db.collection('staff').add({ name: newStaffName, createdAt: new Date() }); setNewStaffName(''); alert("Staff added!"); };
         const handleDeleteStaff = async (id) => { if(confirm("Remove this staff member?")) await db.collection('staff').doc(id).delete(); };
 
-        // Dashboard Stats
         const todayStr = getLocalISODate(new Date());
         const todayJobs = assignments.filter(a => a.jobDate === todayStr);
         const activeJobs = todayJobs.filter(a => a.status === 'active').length;
@@ -286,7 +276,6 @@
                 </div>
 
                 <div className="px-4 space-y-6">
-                    {/* TAB 1: DASHBOARD */}
                     {activeTab === 'dashboard' && (
                         <div className="animate-fade-in space-y-4">
                             <div className="flex justify-between items-end">
@@ -298,50 +287,21 @@
                                 <div className="bg-white p-4 rounded-2xl card-shadow text-center"><div className="text-2xl font-bold text-green-500">{activeJobs}</div><div className="text-[10px] font-bold text-gray-400 uppercase mt-1">Active</div></div>
                                 <div className="bg-white p-4 rounded-2xl card-shadow text-center"><div className="text-2xl font-bold text-gray-600">{completedJobs}</div><div className="text-[10px] font-bold text-gray-400 uppercase mt-1">Done</div></div>
                             </div>
-                            
-                            <div className="bg-white p-4 rounded-2xl card-shadow">
-                                <h3 className="font-bold text-gray-700 mb-3 text-sm">Live Activity</h3>
-                                {todayJobs.length === 0 && <p className="text-gray-400 text-xs italic">No jobs today.</p>}
-                                {todayJobs.map(job => (
-                                    <div key={job.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                                        <div className="flex items-center gap-2">
-                                            <div className={`w-2 h-2 rounded-full ${job.status==='active'?'bg-green-500 animate-pulse':(job.status==='completed'?'bg-gray-300':'bg-blue-500')}`}></div>
-                                            <span className="text-sm font-bold text-gray-700">{job.staffId}</span>
-                                        </div>
-                                        <span className="text-xs text-gray-400">{job.jobName}</span>
-                                    </div>
-                                ))}
-                            </div>
+                            <div className="bg-white p-4 rounded-2xl card-shadow"><h3 className="font-bold text-gray-700 mb-3 text-sm">Live Activity</h3>{todayJobs.length === 0 && <p className="text-gray-400 text-xs italic">No jobs today.</p>}{todayJobs.map(job => (<div key={job.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"><div className="flex items-center gap-2"><div className={`w-2 h-2 rounded-full ${job.status==='active'?'bg-green-500 animate-pulse':(job.status==='completed'?'bg-gray-300':'bg-blue-500')}`}></div><span className="text-sm font-bold text-gray-700">{job.staffId}</span></div><span className="text-xs text-gray-400">{job.jobName}</span></div>))}</div>
                         </div>
                     )}
 
-                    {/* TAB 2: SCHEDULER */}
                     {activeTab === 'scheduler' && (
                         <div className="animate-fade-in">
-                             {/* Calendar Widget */}
                             <div className="bg-white p-4 rounded-xl card-shadow mb-4">
                                 <div className="flex justify-between items-center mb-4"><button onClick={() => changeMonth(-1)} className="p-1"><Icons.ChevronLeft /></button><h2 className="font-bold text-gray-800">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h2><button onClick={() => changeMonth(1)} className="p-1"><Icons.ChevronRight /></button></div>
                                 <div className="grid grid-cols-7 gap-2 mb-2 text-center text-[10px] font-bold text-gray-400"><div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div></div>
                                 <div className="calendar-grid">{Array.from({ length: getFirstDayOfMonth(currentDate.getFullYear(), currentDate.getMonth()) }).map((_, i) => <div key={`e-${i}`} />)}{Array.from({ length: getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth()) }).map((_, i) => { const d = i + 1; const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`; const hasJobs = assignments.some(a => a.jobDate === dateStr); const isSelected = getLocalISODate(selectedDate) === dateStr; return (<div key={d} onClick={() => handleDateClick(d)} className={`calendar-day ${isSelected?'active':''} ${hasJobs?'has-jobs':''}`}>{d}</div>); })}</div>
                             </div>
-
-                            {/* Form */}
                             <div className={`bg-white p-6 rounded-xl card-shadow border-l-4 ${editingJob ? 'border-warning' : 'border-brand'}`}>
-                                <h3 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wider flex justify-between">
-                                    {editingJob ? `Editing Job: ${editingJob.staffId}` : `New Job: ${selectedDate.toDateString()}`}
-                                    {editingJob && <button onClick={() => {setEditingJob(null); setFormData({staffId: '', jobName: '', jobAddress: '', jobDuration: '', customerPhone: '', customerRequest: '', startTime: '', endTime: ''})}} className="text-xs text-red-500">Cancel</button>}
-                                </h3>
+                                <h3 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wider flex justify-between">{editingJob ? `Editing Job: ${editingJob.staffId}` : `New Job: ${selectedDate.toDateString()}`}{editingJob && <button onClick={() => {setEditingJob(null); setFormData({staffId: '', jobName: '', jobAddress: '', jobDuration: '', customerPhone: '', customerRequest: '', startTime: '', endTime: ''})}} className="text-xs text-red-500">Cancel</button>}</h3>
                                 <div className="space-y-4">
-                                    <div className="grid grid-cols-3 gap-3">
-                                        <div className="col-span-2">
-                                            <label className="text-xs font-bold text-gray-400 uppercase block mb-1">Staff</label>
-                                            <select className="modern-input font-bold" value={formData.staffId} onChange={e=>setFormData({...formData, staffId: e.target.value})}>
-                                                <option value="">Select...</option>
-                                                {staffList.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
-                                            </select>
-                                        </div>
-                                        <div className="col-span-1"><label className="text-xs font-bold text-gray-400 uppercase block mb-1">Hrs</label><input type="number" className="modern-input" value={formData.jobDuration} onChange={e=>setFormData({...formData, jobDuration: e.target.value})} /></div>
-                                    </div>
+                                    <div className="grid grid-cols-3 gap-3"><div className="col-span-2"><label className="text-xs font-bold text-gray-400 uppercase block mb-1">Staff</label><select className="modern-input font-bold" value={formData.staffId} onChange={e=>setFormData({...formData, staffId: e.target.value})}><option value="">Select...</option>{staffList.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div><div className="col-span-1"><label className="text-xs font-bold text-gray-400 uppercase block mb-1">Hrs</label><input type="number" className="modern-input" value={formData.jobDuration} onChange={e=>setFormData({...formData, jobDuration: e.target.value})} /></div></div>
                                     <div className="grid grid-cols-2 gap-3"><div><label className="text-xs font-bold text-gray-400 uppercase block mb-1">Start</label><input type="time" className="modern-input" value={formData.startTime} onChange={e=>setFormData({...formData, startTime: e.target.value})} /></div><div><label className="text-xs font-bold text-gray-400 uppercase block mb-1">End</label><input type="time" className="modern-input" value={formData.endTime} onChange={e=>setFormData({...formData, endTime: e.target.value})} /></div></div>
                                     <input type="text" placeholder="Client / Job Name" className="modern-input" value={formData.jobName} onChange={e=>setFormData({...formData, jobName: e.target.value})} />
                                     <input type="text" placeholder="Address" className="modern-input" value={formData.jobAddress} onChange={e=>setFormData({...formData, jobAddress: e.target.value})} />
@@ -350,59 +310,20 @@
                                     <button onClick={handleAssign} className={`w-full text-white py-3 rounded-xl font-bold shadow-lg transition ${editingJob ? 'bg-warning hover:bg-orange-600' : 'bg-brand hover:bg-brandDark'}`}>{editingJob ? 'Update Job' : 'Assign Job'}</button>
                                 </div>
                             </div>
-
-                            {/* List */}
-                            <div className="mt-6">
-                                <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider mb-3 ml-1">Scheduled List</h3>
-                                {assignments.filter(a => a.jobDate === getLocalISODate(selectedDate)).map(job => (
-                                    <div key={job.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center mb-2">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-1"><span className="bg-brandLight text-brandDark text-xs font-bold px-2 py-0.5 rounded capitalize">{job.staffId}</span><span className="font-bold text-gray-800 text-sm">{job.jobName}</span></div>
-                                            <p className="text-xs text-gray-500 flex items-center gap-1"><Icons.Clock size={12}/> {job.jobStartTime} - {job.jobEndTime}</p>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button onClick={() => startEdit(job)} className="text-gray-300 hover:text-blue-500 p-2"><Icons.Edit size={18} /></button>
-                                            <button onClick={() => handleDelete(job.id)} className="text-gray-300 hover:text-red-500 p-2"><Icons.Trash size={18} /></button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                            <div className="mt-6"><h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider mb-3 ml-1">Scheduled List</h3>{assignments.filter(a => a.jobDate === getLocalISODate(selectedDate)).map(job => (<div key={job.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center mb-2"><div><div className="flex items-center gap-2 mb-1"><span className="bg-brandLight text-brandDark text-xs font-bold px-2 py-0.5 rounded capitalize">{job.staffId}</span><span className="font-bold text-gray-800 text-sm">{job.jobName}</span></div><p className="text-xs text-gray-500 flex items-center gap-1"><Icons.Clock size={12}/> {job.jobStartTime} - {job.jobEndTime}</p></div><div className="flex gap-2"><button onClick={() => startEdit(job)} className="text-gray-300 hover:text-blue-500 p-2"><Icons.Edit size={18} /></button><button onClick={() => handleDelete(job.id)} className="text-gray-300 hover:text-red-500 p-2"><Icons.Trash size={18} /></button></div></div>))}</div>
                         </div>
                     )}
 
-                    {/* TAB 3: STAFF MANAGEMENT */}
                     {activeTab === 'staff' && (
                         <div className="animate-fade-in">
-                            <div className="bg-white p-6 rounded-xl card-shadow mb-6">
-                                <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Icons.UserPlus size={20} className="text-brand"/> Add New Staff</h3>
-                                <div className="flex gap-2">
-                                    <input type="text" placeholder="Name (e.g. John)" className="modern-input" value={newStaffName} onChange={e=>setNewStaffName(e.target.value)} />
-                                    <button onClick={handleAddStaff} className="bg-brand text-white px-6 rounded-lg font-bold shadow-lg">Add</button>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider mb-3 ml-1">Staff List ({staffList.length})</h3>
-                                {staffList.map(s => (
-                                    <div key={s.id} className="bg-white p-4 rounded-xl border border-gray-100 flex justify-between items-center mb-2">
-                                        <span className="font-bold text-gray-700">{s.name}</span>
-                                        <button onClick={() => handleDeleteStaff(s.id)} className="text-gray-300 hover:text-red-500"><Icons.Trash size={16} /></button>
-                                    </div>
-                                ))}
-                            </div>
+                            <div className="bg-white p-6 rounded-xl card-shadow mb-6"><h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><Icons.UserPlus size={20} className="text-brand"/> Add New Staff</h3><div className="flex gap-2"><input type="text" placeholder="Name (e.g. John)" className="modern-input" value={newStaffName} onChange={e=>setNewStaffName(e.target.value)} /><button onClick={handleAddStaff} className="bg-brand text-white px-6 rounded-lg font-bold shadow-lg">Add</button></div></div>
+                            <div><h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider mb-3 ml-1">Staff List ({staffList.length})</h3>{staffList.map(s => (<div key={s.id} className="bg-white p-4 rounded-xl border border-gray-100 flex justify-between items-center mb-2"><span className="font-bold text-gray-700">{s.name}</span><button onClick={() => handleDeleteStaff(s.id)} className="text-gray-300 hover:text-red-500"><Icons.Trash size={16} /></button></div>))}</div>
                         </div>
                     )}
 
-                    {/* TAB 4: HISTORY */}
                     {activeTab === 'history' && (
                          <div className="space-y-4 animate-fade-in">
-                             {historyLogs.map(log => (
-                                <div key={log.id} className="bg-white p-5 rounded-xl card-shadow flex flex-col gap-2">
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex items-center gap-2"><div className="bg-gray-100 p-2 rounded-full"><Icons.CheckCircle size={20} className="text-green-500" /></div><div><h4 className="font-bold text-gray-800 capitalize">{log.staffId}</h4><p className="text-xs text-gray-500">{log.endTime?log.endTime.toDate().toLocaleDateString():''}</p></div></div>
-                                        <div className="text-right"><span className="block font-bold text-brand text-lg">{formatDuration(log.durationSeconds)}</span><span className="text-xs text-gray-400 uppercase font-bold">Worked</span></div>
-                                    </div>
-                                </div>
-                            ))}
+                             {historyLogs.map(log => (<div key={log.id} className="bg-white p-5 rounded-xl card-shadow flex flex-col gap-2"><div className="flex justify-between items-start"><div className="flex items-center gap-2"><div className="bg-gray-100 p-2 rounded-full"><Icons.CheckCircle size={20} className="text-green-500" /></div><div><h4 className="font-bold text-gray-800 capitalize">{log.staffId}</h4><p className="text-xs text-gray-500">{log.endTime?log.endTime.toDate().toLocaleDateString():''}</p></div></div><div className="text-right"><span className="block font-bold text-brand text-lg">{formatDuration(log.durationSeconds)}</span><span className="text-xs text-gray-400 uppercase font-bold">Worked</span></div></div></div>))}
                          </div>
                     )}
                 </div>
@@ -421,15 +342,12 @@
         const fileInputRef = useRef(null);
         
         const todayStr = getLocalISODate(new Date());
-        
-        // Planner State
         const [currentDate, setCurrentDate] = useState(new Date());
         const [selectedDate, setSelectedDate] = useState(new Date());
 
         useEffect(() => {
             const unsubJobs = db.collection('assignments').where('staffEmail', '==', user.email).onSnapshot(snap => {
                 const jobs = snap.docs.map(d => ({id: d.id, ...d.data()}));
-                // SORTING LOGIC: Sort by Time
                 jobs.sort((a, b) => a.jobStartTime.localeCompare(b.jobStartTime));
                 setMyJobs(jobs);
             });
@@ -504,28 +422,28 @@
                             )
                         )}
                     </div>
-                    <div className={`flex items-start gap-2 text-sm p-3 rounded-xl border ${isLocked ? 'bg-gray-50 border-gray-200 text-gray-400' : 'bg-surface border-gray-100 text-gray-600'}`}>
-                        {isLocked ? (
-                            <>
-                                <Icons.Lock size={16} className="mt-0.5 flex-shrink-0" />
-                                <div><span className="font-bold text-xs block uppercase">Location Protected</span><span className="text-xs">Viewable on day of job</span></div>
-                            </>
-                        ) : (
-                            <>
-                                <Icons.MapPin size={16} className="mt-0.5 flex-shrink-0 text-gray-400" /><span className="font-medium">{job.jobAddress}</span>
-                            </>
-                        )}
-                    </div>
+                    
+                    {/* ADDRESS SECTION - FIXED FOR V15: CLICKABLE MAP */}
+                    {isLocked ? (
+                        <div className="flex items-start gap-2 text-sm p-3 rounded-xl border bg-gray-50 border-gray-200 text-gray-400">
+                            <Icons.Lock size={16} className="mt-0.5 flex-shrink-0" />
+                            <div><span className="font-bold text-xs block uppercase">Location Protected</span><span className="text-xs">Viewable on day of job</span></div>
+                        </div>
+                    ) : (
+                        <a href={`https://maps.google.com/?q=${encodeURIComponent(job.jobAddress)}`} target="_blank" rel="noreferrer" className="flex items-start gap-2 text-sm p-3 rounded-xl border bg-surface border-gray-100 text-gray-600 hover:bg-gray-100 transition cursor-pointer">
+                            <Icons.MapPin size={16} className="mt-0.5 flex-shrink-0 text-brand" />
+                            <span className="font-medium flex-1">{job.jobAddress}</span>
+                            <Icons.ExternalLink size={14} className="text-gray-400 mt-0.5" />
+                        </a>
+                    )}
                 </div>
             );
         };
 
         const todayJobs = myJobs.filter(j => j.jobDate === todayStr || j.status === 'active');
         const plannerJobs = myJobs.filter(j => j.jobDate === getLocalISODate(selectedDate));
-        // Calculate Hours Today
         const hoursWorkedToday = todayJobs.filter(j => j.status === 'completed').reduce((acc, curr) => acc + (parseFloat(curr.jobDuration) || 0), 0);
 
-        // Calendar Logic
         const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
         const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
         const changeMonth = (offset) => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + offset, 1));
